@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>여행 환율 계산기</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#374785">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" href="icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Apple SD Gothic Neo, "Noto Sans KR", sans-serif;
+      --scale: 1;            /* 시니어 모드에서 1.18로 커집니다 */
+      --brand: #374785;
+      --brand-dark: #2a366a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); background: #fafafa; color: #222; font-size: calc(16px * var(--scale)); }
+    .card { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+    .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    h1 { font-size: calc(20px * var(--scale)); margin: 0 0 4px; line-height: 1.3; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 12px 0; }
+    .full { grid-column: 1 / -1; }
+    label { font-size: calc(12px * var(--scale)); color: #555; margin-bottom: 6px; display: block; font-weight: 600; }
+    input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: calc(16px * var(--scale)); background: #fff; }
+    input:focus, select:focus { border-color: var(--brand); outline: 2px solid rgba(55,71,133,.15); }
+    .muted { color: #666; font-size: calc(12px * var(--scale)); }
+    .btn { padding: 11px 14px; border-radius: 10px; border: 1px solid #ddd; background: #fff; cursor: pointer; white-space: nowrap; font-size: calc(14px * var(--scale)); }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible { outline: 2px solid var(--brand); }
+    .btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 600; }
+    .btn-primary:active { background: var(--brand-dark); }
+    .btn-primary:disabled { opacity: .6; cursor: default; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .note { font-size: calc(12px * var(--scale)); color: #666; line-height: 1.7; margin: 6px 0 0; }
+    .pill { font-size: calc(11px * var(--scale)); padding: 4px 8px; border-radius: 999px; border: 1px solid #ddd; background: #f7f7f7; color: #555; white-space: nowrap; }
+    .quick-amounts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .quick-amounts button { padding: 7px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer; font-size: calc(13px * var(--scale)); }
+    .quick-amounts button:active { background: #e0e0e0; }
+    .currency-info { font-size: calc(12px * var(--scale)); color: #888; margin-top: 4px; }
+
+    /* 결과 강조 */
+    .result-box { grid-column: 1 / -1; background: linear-gradient(180deg,#f4f6ff,#eef1fb); border: 1px solid #dde2f4; border-radius: 14px; padding: 16px; }
+    .result-box label { color: var(--brand); }
+    #result { font-size: calc(26px * var(--scale)); font-weight: 700; color: #1c2547; min-height: 1.4em; word-break: break-all; }
+    #subResult { font-size: calc(12px * var(--scale)); color: #6a7290; margin-top: 4px; }
+
+    /* 상태바 (alert 대체) */
+    #status { display: none; margin: 4px 0 0; padding: 10px 12px; border-radius: 10px; font-size: calc(13px * var(--scale)); line-height: 1.5; }
+    #status.show { display: block; }
+    #status.info { background: #eef4ff; color: #2a4070; border: 1px solid #d3e0fb; }
+    #status.warn { background: #fff6e5; color: #8a5a00; border: 1px solid #ffe2a8; }
+    #status.err  { background: #fdecec; color: #8a2020; border: 1px solid #f6c9c9; }
+
+    .toggle { display: flex; align-items: center; gap: 6px; font-size: calc(12px * var(--scale)); color: #555; cursor: pointer; user-select: none; }
+    .toggle input { width: auto; }
+
+    @media (max-width:480px){ .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div>
+        <h1>여행 환율 계산기</h1>
+        <span class="pill" id="netPill">PWA · 실시간 환율</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="seniorToggle"> 큰 글씨</label>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="row">
+      <div>
+        <label>통화 선택</label>
+        <select id="currency">
+          <option value="THB">🇹🇭 태국 바트 (THB) — 치앙마이·방콕</option>
+          <option value="IDR">🇮🇩 인도네시아 루피아 (IDR) — 발리</option>
+          <option value="USD">🇺🇸 미국 달러 (USD) — 플로리다</option>
+          <option value="TWD">🇹🇼 대만 달러 (TWD) — 타이베이</option>
+          <option value="CNY">🇨🇳 중국 위안 (CNY) — 상하이</option>
+          <option value="VND">🇻🇳 베트남 동 (VND) — 다낭</option>
+        </select>
+        <div class="currency-info" id="currencyInfo"></div>
+      </div>
+      <div>
+        <label>방향</label>
+        <select id="direction">
+          <option value="fwd" id="dirFwd"></option>
+          <option value="rev" id="dirRev"></option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>금액 <span id="amtLabel"></span></label>
+        <input id="amount" type="text" placeholder="" inputmode="decimal" autocomplete="off" />
+        <div class="quick-amounts" id="quickAmounts"></div>
+      </div>
+      <div>
+        <label>환율 <span id="rateLabel"></span></label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="rate" type="text" placeholder="" inputmode="decimal" autocomplete="off" style="flex: 1 1 60%;" />
+          <button class="btn btn-primary" id="fetchBtn" type="button">새로고침</button>
+        </div>
+        <div class="muted" id="rateHint"></div>
+        <div class="muted" id="lastUpdated">업데이트 시각: -</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>수수료(%) — 선택</label>
+        <input id="fee" type="text" placeholder="예: 2.5" inputmode="decimal" autocomplete="off" />
+        <div class="muted">카드/환전 스프레드가 있으면 입력(없으면 비워두기)</div>
+      </div>
+      <div>
+        <label>반올림 자릿수</label>
+        <select id="decimals">
+          <option value="0">0자리</option>
+          <option value="1">1자리</option>
+          <option value="2">2자리</option>
+          <option value="3">3자리</option>
+        </select>
+        <div class="muted">통화·방향에 맞춰 자동 설정됩니다(직접 변경 가능)</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="result-box">
+        <label>결과</label>
+        <div id="result">—</div>
+        <div id="subResult"></div>
+        <div class="actions">
+          <button class="btn" id="copyBtn">결과 복사</button>
+          <button class="btn" id="swapBtn">방향 바꾸기</button>
+          <button class="btn" id="resetBtn">초기화</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      환율은 <code>open.er-api.com</code> → <code>currency-api(jsDelivr)</code> → <code>currency-api(Cloudflare)</code> 순으로 자동 시도합니다. 모두 무료·키 불필요.<br/>
+      오프라인이어도 마지막으로 받은 환율과 화면이 저장됩니다. 무료 환율은 보통 하루 1회 갱신이라, 큰 금액은 현장 고시 환율로 한 번 더 확인하세요.
+    </p>
+  </div>
+
+  <script>
+    /* ---------- 서비스워커 등록 ---------- */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          await navigator.serviceWorker.register('./sw.js');
+          navigator.serviceWorker.addEventListener('message', (evt) => {
+            if (evt.data && evt.data.type === 'NEW_VERSION_READY') setTimeout(() => location.reload(), 200);
+          });
+          navigator.serviceWorker.addEventListener('controllerchange', () => setTimeout(() => location.reload(), 200));
+        } catch (e) { /* SW 미지원 환경은 무시 */ }
+      });
+    }
+
+    /* ---------- 통화 정의 ---------- */
+    const CURRENCIES = {
+      THB: { name: '바트',     symbol: '฿',   flag: '🇹🇭', defaultRate: 42.0,   revDec: 0, quickFwd: [100,500,1000,5000],          quickRev: [10000,50000,100000,500000] },
+      IDR: { name: '루피아',   symbol: 'Rp',  flag: '🇮🇩', defaultRate: 0.085,  revDec: 0, quickFwd: [50000,100000,500000,1000000], quickRev: [10000,50000,100000,500000] },
+      USD: { name: '달러',     symbol: '$',   flag: '🇺🇸', defaultRate: 1380.0, revDec: 2, quickFwd: [10,50,100,500],              quickRev: [10000,50000,100000,500000] },
+      TWD: { name: '대만달러', symbol: 'NT$', flag: '🇹🇼', defaultRate: 43.0,   revDec: 0, quickFwd: [100,500,1000,5000],          quickRev: [10000,50000,100000,500000] },
+      CNY: { name: '위안',     symbol: '¥',   flag: '🇨🇳', defaultRate: 192.0,  revDec: 1, quickFwd: [10,50,100,500],              quickRev: [10000,50000,100000,500000] },
+      VND: { name: '동',       symbol: '₫',   flag: '🇻🇳', defaultRate: 0.054,  revDec: 0, quickFwd: [50000,100000,500000,1000000], quickRev: [10000,50000,100000,500000] }
+    };
+
+    const el = (id) => document.getElementById(id);
+    const currency = el('currency'), direction = el('direction'), decimals = el('decimals'),
+          amount = el('amount'), rate = el('rate'), fee = el('fee'),
+          result = el('result'), subResult = el('subResult'), amtLabel = el('amtLabel'),
+          copyBtn = el('copyBtn'), swapBtn = el('swapBtn'), resetBtn = el('resetBtn'), fetchBtn = el('fetchBtn'),
+          lastUpdatedEl = el('lastUpdated'), rateHint = el('rateHint'), rateLabel = el('rateLabel'),
+          currencyInfo = el('currencyInfo'), quickAmounts = el('quickAmounts'),
+          dirFwd = el('dirFwd'), dirRev = el('dirRev'), statusEl = el('status'),
+          netPill = el('netPill'), seniorToggle = el('seniorToggle');
+
+    /* ---------- 유틸 ---------- */
+    const toNumber = (v) => Number((v || '').replace(/[,\s]/g, '')) || 0;
+    const fmtNumber = (num, dec) => isFinite(num) ? Number(num.toFixed(dec)).toLocaleString() : '';
+    const pad2 = (n) => (n < 10 ? '0' + n : '' + n);
+    const fmtDate = (ts) => { const d = new Date(ts); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+    // 환율 표시: 1 이상이면 소수 2자리, 1 미만(IDR·VND)이면 유효숫자 4자리
+    const fmtRate = (v) => v >= 1 ? Number(v.toFixed(2)).toString() : Number(v.toPrecision(4)).toString();
+    const storageKey = (code, key) => `fx_${code}_${key}`;
+
+    function showStatus(type, msg) { statusEl.className = 'show ' + type; statusEl.textContent = msg; }
+    function clearStatus() { statusEl.className = ''; statusEl.textContent = ''; }
+
+    /* ---------- 환율 신선도 / 업데이트 시각 ---------- */
+    function setLastUpdated(code, ts, src='자동') {
+      localStorage.setItem(storageKey(code,'updatedAt'), ts);
+      localStorage.setItem(storageKey(code,'source'), src);
+      renderUpdated(code);
+    }
+    function renderUpdated(code) {
+      const t = localStorage.getItem(storageKey(code,'updatedAt'));
+      const s = localStorage.getItem(storageKey(code,'source')) || '자동';
+      if (!t) { lastUpdatedEl.textContent = '업데이트 시각: -'; return; }
+      const ageH = (Date.now() - new Date(t).getTime()) / 36e5;
+      const stale = ageH > 24 ? '  ⚠ 오래됨' : '';
+      lastUpdatedEl.textContent = `업데이트 시각: ${fmtDate(t)} (${s})${stale}`;
+      lastUpdatedEl.style.color = ageH > 24 ? '#a86a00' : '#666';
+    }
+
+    function cur() { return CURRENCIES[currency.value]; }
+    function isFwd() { return direction.value === 'fwd'; }
+
+    /* ---------- 화면 갱신 ---------- */
+    function updateUI() {
+      const c = cur(), code = currency.value;
+      dirFwd.textContent = `${c.flag} ${c.name} ➜ 원 (${code} → KRW)`;
+      dirRev.textContent = `🇰🇷 원 ➜ ${c.name} (KRW → ${code})`;
+      amtLabel.textContent = isFwd() ? `(${c.name})` : '(원)';
+      rateLabel.textContent = `(원 / 1 ${code})`;
+      amount.placeholder = isFwd() ? `예: ${(c.quickFwd[2] || 100).toLocaleString()}` : '예: 50,000';
+      currencyInfo.textContent = `${c.flag} 1 ${code} = 약 ${fmtRate(getRate())}원`;
+
+      // 캐시된 환율 불러오기
+      const cached = localStorage.getItem(storageKey(code,'rate'));
+      rate.value = cached || fmtRate(c.defaultRate);
+      renderUpdated(code);
+
+      // 환율 힌트: 소액 통화는 1,000단위로 환산해 직관적으로 표시
+      const r = getRate();
+      if (r < 1) {
+        rateHint.textContent = `예: 1,000 ${code} = ${fmtNumber(1000*r, 0)}원`;
+      } else {
+        rateHint.textContent = `예: 1 ${code} = ${fmtRate(r)}원`;
+      }
+
+      // 반올림 자릿수 자동 설정(정방향=원 환산이라 0자리, 역방향=통화별 권장)
+      decimals.value = isFwd() ? '0' : String(c.revDec);
+
+      // 빠른 금액 버튼
+      const amounts = isFwd() ? c.quickFwd : c.quickRev;
+      quickAmounts.innerHTML = amounts.map(v => `<button type="button" data-val="${v}">${v.toLocaleString()}</button>`).join('');
+      quickAmounts.querySelectorAll('button').forEach(b => {
+        b.addEventListener('click', () => { amount.value = Number(b.dataset.val).toLocaleString(); calc(); });
+      });
+
+      calc();
+    }
+
+    function getRate() { return toNumber(rate.value) || cur().defaultRate; }
+
+    /* ---------- 계산 ---------- */
+    function calc() {
+      const amt = toNumber(amount.value), r = toNumber(rate.value), f = toNumber(fee.value)/100, d = +decimals.value;
+      if (amt <= 0 || r <= 0) { result.textContent = '—'; subResult.textContent = ''; return; }
+      const feeAdj = isFinite(f) ? f : 0;
+      const c = cur(), code = currency.value;
+      if (isFwd()) {
+        const out = amt * r * (1 + feeAdj);
+        result.textContent = fmtNumber(out, d) + ' 원';
+        subResult.textContent = `${amt.toLocaleString()} ${code}${feeAdj ? ` · 수수료 ${(feeAdj*100)}% 포함` : ''}`;
+      } else {
+        const out = amt / r / (1 + feeAdj);
+        result.textContent = fmtNumber(out, d) + ' ' + c.name + ` (${code})`;
+        subResult.textContent = `${amt.toLocaleString()} 원${feeAdj ? ` · 수수료 ${(feeAdj*100)}% 포함` : ''}`;
+      }
+    }
+
+    /* ---------- 이벤트 ---------- */
+    currency.addEventListener('change', () => { localStorage.setItem('fx_lastCurrency', currency.value); updateUI(); maybeAutoRefresh(); });
+    direction.addEventListener('change', updateUI);
+    decimals.addEventListener('change', calc);
+    [amount, fee].forEach(e => e.addEventListener('input', calc));
+    rate.addEventListener('input', () => {
+      calc();
+      if (rate.value.trim()) {
+        localStorage.setItem(storageKey(currency.value,'rate'), rate.value);
+        setLastUpdated(currency.value, new Date().toISOString(), '수동');
+        currencyInfo.textContent = `${cur().flag} 1 ${currency.value} = 약 ${fmtRate(getRate())}원`;
+      }
+    });
+    copyBtn.onclick = async () => {
+      if (!result.textContent || result.textContent === '—') return;
+      try { await navigator.clipboard.writeText(result.textContent); copyBtn.textContent = '복사됨'; setTimeout(() => copyBtn.textContent = '결과 복사', 1000); }
+      catch (e) { showStatus('warn', '복사가 지원되지 않는 환경입니다. 결과를 길게 눌러 직접 복사하세요.'); }
+    };
+    swapBtn.onclick = () => { direction.value = isFwd() ? 'rev' : 'fwd'; updateUI(); };
+    resetBtn.onclick = () => { amount.value = ''; fee.value = ''; calc(); clearStatus(); };
+
+    /* ---------- 실시간 환율 ---------- */
+    async function fetchRate(silent = false) {
+      const code = currency.value, lower = code.toLowerCase();
+      const sources = [
+        { url: `https://open.er-api.com/v6/latest/${code}`, pick: j => j && j.rates && j.rates.KRW },
+        { url: `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${lower}.json`, pick: j => j && j[lower] && j[lower].krw },
+        { url: `https://latest.currency-api.pages.dev/v1/currencies/${lower}.json`, pick: j => j && j[lower] && j[lower].krw }
+      ];
+      for (const s of sources) {
+        try {
+          const res = await fetch(s.url, { cache: 'no-store' });
+          if (!res.ok) continue;
+          const j = await res.json();
+          const v = s.pick(j);
+          if (v && isFinite(v) && v > 0) {
+            rate.value = fmtRate(v);
+            localStorage.setItem(storageKey(code,'rate'), rate.value);
+            setLastUpdated(code, new Date().toISOString(), '자동');
+            currencyInfo.textContent = `${cur().flag} 1 ${code} = 약 ${fmtRate(v)}원`;
+            calc();
+            if (!silent) { showStatus('info', `${code} 환율을 새로 받았습니다.`); setTimeout(clearStatus, 2500); }
+            return true;
+          }
+        } catch (e) { /* 다음 소스 시도 */ }
+      }
+      if (!silent) showStatus('err', '환율을 받지 못했습니다. 네트워크를 확인한 뒤 새로고침을 다시 눌러주세요. 그동안은 저장된 환율로 계산됩니다.');
+      return false;
+    }
+
+    fetchBtn.onclick = async () => {
+      if (!navigator.onLine) { showStatus('warn', '오프라인 상태입니다. 저장된 환율로 계산 중이며, 연결되면 다시 새로고침하세요.'); return; }
+      fetchBtn.disabled = true; const t = fetchBtn.textContent; fetchBtn.textContent = '받는 중…';
+      await fetchRate(false);
+      fetchBtn.textContent = t; fetchBtn.disabled = false;
+    };
+
+    // 캐시가 없거나 6시간 이상 지났고 온라인이면 조용히 자동 갱신
+    function maybeAutoRefresh() {
+      if (!navigator.onLine) return;
+      const t = localStorage.getItem(storageKey(currency.value,'updatedAt'));
+      const ageH = t ? (Date.now() - new Date(t).getTime()) / 36e5 : Infinity;
+      if (ageH > 6) fetchRate(true);
+    }
+
+    /* ---------- 온라인/오프라인 표시 ---------- */
+    function renderNet() {
+      if (navigator.onLine) { netPill.textContent = 'PWA · 실시간 환율'; }
+      else { netPill.textContent = 'PWA · 오프라인'; }
+    }
+    window.addEventListener('online', () => { renderNet(); clearStatus(); maybeAutoRefresh(); });
+    window.addEventListener('offline', () => { renderNet(); showStatus('warn', '오프라인 상태입니다. 저장된 환율로 계산합니다.'); });
+
+    /* ---------- 큰 글씨(시니어) 토글 ---------- */
+    function applySenior(on) {
+      document.documentElement.style.setProperty('--scale', on ? '1.18' : '1');
+      seniorToggle.checked = on;
+      localStorage.setItem('fx_senior', on ? '1' : '0');
+    }
+    seniorToggle.addEventListener('change', () => applySenior(seniorToggle.checked));
+
+    /* ---------- 초기화 ---------- */
+    (function init() {
+      applySenior(localStorage.getItem('fx_senior') === '1');
+      const last = localStorage.getItem('fx_lastCurrency');
+      if (last && CURRENCIES[last]) currency.value = last;
+      renderNet();
+      updateUI();
+      maybeAutoRefresh();
+    })();
+  </script>
+</body>
+</html>

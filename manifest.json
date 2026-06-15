@@ -1,0 +1,25 @@
+{
+  "name": "여행 환율 계산기",
+  "short_name": "환율 계산기",
+  "description": "치앙마이·발리·플로리다·타이베이·상하이·다낭 등 여행지 통화를 한 앱에서 환산",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fafafa",
+  "theme_color": "#374785",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
