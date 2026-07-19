@@ -1,7 +1,7 @@
 {
   "name": "여행 환율 계산기",
   "short_name": "환율 계산기",
-  "description": "치앙마이·발리·플로리다·타이베이·상하이·다낭 등 여행지 통화를 한 앱에서 환산",
+  "description": "치앙마이·발리·플로리다·타이베이·상하이·다낭·벳푸 등 여행지 통화를 한 앱에서 환산",
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",

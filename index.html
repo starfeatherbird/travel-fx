@@ -83,6 +83,7 @@
           <option value="TWD">🇹🇼 대만 달러 (TWD) — 타이베이</option>
           <option value="CNY">🇨🇳 중국 위안 (CNY) — 상하이</option>
           <option value="VND">🇻🇳 베트남 동 (VND) — 다낭</option>
+          <option value="JPY">🇯🇵 일본 엔 (JPY) — 벳푸·도쿄</option>
         </select>
         <div class="currency-info" id="currencyInfo"></div>
       </div>
@@ -170,7 +171,8 @@
       USD: { name: '달러',     symbol: '$',   flag: '🇺🇸', defaultRate: 1380.0, revDec: 2, quickFwd: [10,50,100,500],              quickRev: [10000,50000,100000,500000] },
       TWD: { name: '대만달러', symbol: 'NT$', flag: '🇹🇼', defaultRate: 43.0,   revDec: 0, quickFwd: [100,500,1000,5000],          quickRev: [10000,50000,100000,500000] },
       CNY: { name: '위안',     symbol: '¥',   flag: '🇨🇳', defaultRate: 192.0,  revDec: 1, quickFwd: [10,50,100,500],              quickRev: [10000,50000,100000,500000] },
-      VND: { name: '동',       symbol: '₫',   flag: '🇻🇳', defaultRate: 0.054,  revDec: 0, quickFwd: [50000,100000,500000,1000000], quickRev: [10000,50000,100000,500000] }
+      VND: { name: '동',       symbol: '₫',   flag: '🇻🇳', defaultRate: 0.054,  revDec: 0, quickFwd: [50000,100000,500000,1000000], quickRev: [10000,50000,100000,500000] },
+      JPY: { name: '엔',       symbol: '¥',   flag: '🇯🇵', defaultRate: 9.5,    revDec: 0, quickFwd: [1000,5000,10000,50000],       quickRev: [10000,50000,100000,500000] }
     };
 
     const el = (id) => document.getElementById(id);
