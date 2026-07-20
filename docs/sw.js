@@ -1,6 +1,6 @@
 // sw.js — PWA 캐시 자동 갱신 버전
 // 앱 파일을 바꿀 때마다 CACHE_VERSION을 올리면 기기에서 자동으로 새 버전을 받습니다.
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `fx-calc-cache-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [

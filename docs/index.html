@@ -18,7 +18,14 @@
       --brand-dark: #2a366a;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); background: #fafafa; color: #222; font-size: calc(16px * var(--scale)); }
+    /* 안전영역: Capacitor 앱은 --safe-area-inset-* 변수를 주입하고, 웹/iOS는 env()를 사용 */
+    :root {
+      --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+      --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+      --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+      --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+    }
+    body { margin: 0; padding: calc(20px + var(--safe-top)) calc(16px + var(--safe-right)) calc(20px + var(--safe-bottom)) calc(16px + var(--safe-left)); background: #fafafa; color: #222; font-size: calc(16px * var(--scale)); }
     .card { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
     .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     h1 { font-size: calc(20px * var(--scale)); margin: 0 0 4px; line-height: 1.3; }
