@@ -147,6 +147,7 @@
           <button class="btn" id="copyBtn">결과 복사</button>
           <button class="btn" id="swapBtn">방향 바꾸기</button>
           <button class="btn" id="resetBtn">초기화</button>
+          <button class="btn" id="ledgerBtn" hidden>가계부에 기록</button>
         </div>
       </div>
     </div>
@@ -187,6 +188,7 @@
           amount = el('amount'), rate = el('rate'), fee = el('fee'),
           result = el('result'), subResult = el('subResult'), amtLabel = el('amtLabel'),
           copyBtn = el('copyBtn'), swapBtn = el('swapBtn'), resetBtn = el('resetBtn'), fetchBtn = el('fetchBtn'),
+          ledgerBtn = el('ledgerBtn'),
           lastUpdatedEl = el('lastUpdated'), rateHint = el('rateHint'), rateLabel = el('rateLabel'),
           currencyInfo = el('currencyInfo'), quickAmounts = el('quickAmounts'),
           dirFwd = el('dirFwd'), dirRev = el('dirRev'), statusEl = el('status'),
@@ -298,6 +300,24 @@
     };
     swapBtn.onclick = () => { direction.value = isFwd() ? 'rev' : 'fwd'; updateUI(); };
     resetBtn.onclick = () => { amount.value = ''; fee.value = ''; calc(); clearStatus(); };
+
+    /* ---------- 가계부 앱 연계 (안드로이드 앱에서만 — budgetapp:// 딥링크) ---------- */
+    if (window.Capacitor) ledgerBtn.hidden = false;
+    ledgerBtn.onclick = () => {
+      const amt = toNumber(amount.value), r = toNumber(rate.value), f = toNumber(fee.value) / 100;
+      if (amt <= 0 || r <= 0) { showStatus('warn', '금액을 먼저 입력하세요.'); return; }
+      const feeAdj = isFinite(f) ? f : 0;
+      const code = currency.value;
+      // 가계부에는 원화 금액을 보내고, 내용에 외화 금액을 남긴다
+      const krw = Math.round(isFwd() ? amt * r * (1 + feeAdj) : amt);
+      const foreignText = isFwd()
+        ? amt.toLocaleString()
+        : fmtNumber(amt / r / (1 + feeAdj), +decimals.value);
+      const content = `여행 ${foreignText} ${code}`;
+      const url = `budgetapp://record?amount=${krw}&content=${encodeURIComponent(content)}&n=${Date.now()}`;
+      window.location.href = url;
+      showStatus('info', `가계부로 보냈습니다: ${krw.toLocaleString()}원 · ${content}. 앱이 열리지 않으면 가계부 앱 설치를 확인하세요.`);
+    };
 
     /* ---------- 실시간 환율 ---------- */
     async function fetchRate(silent = false) {

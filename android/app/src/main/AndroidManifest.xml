@@ -38,4 +38,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 가계부 앱(budgetapp:// 딥링크) 실행을 위한 패키지 가시성 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="budgetapp" />
+        </intent>
+    </queries>
 </manifest>
