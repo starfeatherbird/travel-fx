@@ -16,10 +16,27 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // CI 서명: 키스토어는 GitHub Secrets에 있고, 워크플로우가 파일 복원 + 비밀번호를
+    // KEYSTORE_PASSWORD 환경변수로 전달한다. 로컬 빌드(환경변수 없음)는 기존대로 동작.
+    signingConfigs {
+        ci {
+            def ksPass = System.getenv('KEYSTORE_PASSWORD')
+            if (ksPass != null) {
+                storeFile file('travelfx.keystore')
+                storeType 'PKCS12'
+                storePassword ksPass
+                keyAlias 'travelfx'
+                keyPassword ksPass
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (System.getenv('KEYSTORE_PASSWORD') != null) {
+                signingConfig signingConfigs.ci
+            }
         }
     }
 }
