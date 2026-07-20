@@ -1,0 +1,8 @@
+{
+  "appId": "com.starfeatherbird.travelfx",
+  "appName": "여행 환율 계산기",
+  "webDir": "docs",
+  "android": {
+    "allowMixedContent": false
+  }
+}
