@@ -52,7 +52,11 @@ jobs:
       - name: Commit APK to repository
         if: github.ref == 'refs/heads/main'
         run: |
+          set -x
           rm -f android/app/travelfx.keystore
+          # cap sync가 재생성한 추적 파일 변경을 되돌린다 (더러운 트리면 pull --rebase가 실패)
+          git status --porcelain
+          git checkout -- .
           VERSION=$(grep versionName android/app/build.gradle | tr -dc '0-9.')
           APK="여행환율_v${VERSION}.apk"
           cp travel-fx.apk "$APK"
