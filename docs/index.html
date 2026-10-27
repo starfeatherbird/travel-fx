@@ -60,7 +60,6 @@
       --live-text: #1E7A3C;
       --accent: #1D559C;         /* 새로고침 등 강조 버튼 배경 */
       --accent-text: #1D559C;    /* 카드 위 강조 텍스트 */
-      --ledger-border: #C9D8EB;
       --spark: #1D559C;
       --spark-op: .08;
       --hero-shadow: 0 10px 26px rgba(29,85,156,.3);
@@ -93,7 +92,6 @@
       --live-text: #5BC97F;
       --accent: #3B76BF;
       --accent-text: #9DC1EC;
-      --ledger-border: #2E4667;
       --spark: #6FA3DC;
       --spark-op: .1;
       --hero-shadow: 0 10px 26px rgba(0,0,0,.45);
@@ -241,12 +239,6 @@
       background: var(--card); color: var(--sub); font-size: calc(14px * var(--scale)); font-weight: 600;
     }
 
-    /* ---------- 가계부 버튼 ---------- */
-    .ledger {
-      width: 100%; padding: 15px 0; border-radius: 14px; border: 1.5px solid var(--ledger-border);
-      background: var(--card); color: var(--accent-text); font-size: calc(15px * var(--scale)); font-weight: 700;
-    }
-
     /* ---------- 푸터 ---------- */
     .foot-note { margin: 0; font-size: calc(12px * var(--scale)); color: var(--muted); line-height: 1.7; text-align: center; }
   </style>
@@ -347,8 +339,6 @@
       </div>
     </section>
 
-    <button id="ledgerBtn" class="ledger" type="button" hidden>📒 가계부에 기록하기</button>
-
     <p class="foot-note">오프라인이어도 마지막 환율로 계산해 드려요.<br>큰 금액은 현장 고시 환율로 한 번 더 확인하세요.</p>
   </main>
 
@@ -381,7 +371,6 @@
     const decimals = el('decimals'), amount = el('amount'), rate = el('rate'), fee = el('fee'),
           heroLabel = el('heroLabel'), heroValue = el('heroValue'), heroSub = el('heroSub'),
           copyBtn = el('copyBtn'), swapBtn = el('swapBtn'), resetBtn = el('resetBtn'), fetchBtn = el('fetchBtn'),
-          ledgerBtn = el('ledgerBtn'),
           lastUpdatedEl = el('lastUpdated'), rateHint = el('rateHint'), rateLabel = el('rateLabel'),
           chips = el('chips'), segFwd = el('segFwd'), segRev = el('segRev'),
           amtLabel = el('amtLabel'), amtCode = el('amtCode'), quickAmounts = el('quickAmounts'),
@@ -641,24 +630,6 @@
     (darkMedia.addEventListener ? darkMedia.addEventListener.bind(darkMedia, 'change') : darkMedia.addListener.bind(darkMedia))(
       () => { if ((localStorage.getItem('fx_theme') || 'auto') === 'auto') applyTheme('auto', false); }
     );
-
-    /* ---------- 가계부 앱 연계 (안드로이드 앱에서만 — budgetapp:// 딥링크) ---------- */
-    if (window.Capacitor) ledgerBtn.hidden = false;
-    ledgerBtn.addEventListener('click', () => {
-      const amt = toNumber(amount.value), r = toNumber(rate.value), f = toNumber(fee.value) / 100;
-      if (amt <= 0 || r <= 0) { showStatus('warn', '금액을 먼저 입력하세요.'); return; }
-      const feeAdj = isFinite(f) ? f : 0;
-      const code = currencyCode;
-      // 가계부에는 원화 금액을 보내고, 내용에 외화 금액을 남긴다
-      const krw = Math.round(isFwd() ? amt * r * (1 + feeAdj) : amt);
-      const foreignText = isFwd()
-        ? amt.toLocaleString()
-        : fmtNumber(amt / r / (1 + feeAdj), +decimals.value);
-      const content = `여행 ${foreignText} ${code}`;
-      const url = `budgetapp://record?amount=${krw}&content=${encodeURIComponent(content)}&n=${Date.now()}`;
-      window.location.href = url;
-      showStatus('info', `가계부로 보냈습니다: ${krw.toLocaleString()}원 · ${content}. 앱이 열리지 않으면 가계부 앱 설치를 확인하세요.`);
-    });
 
     /* ---------- 실시간 환율 ---------- */
     async function fetchRate(silent = false) {
